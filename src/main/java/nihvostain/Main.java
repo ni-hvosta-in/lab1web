@@ -34,6 +34,7 @@ public class Main {
                     }
 
                     String data = new String(buffer, StandardCharsets.UTF_8);
+                    HashMap<String, String> map = parse(data);
 
                     System.out.print("Status: 200 OK\r\n");
                     System.out.print("Content-Type: text/html; charset=UTF-8\r\n\r\n");
@@ -49,12 +50,17 @@ public class Main {
         }
     }
 
-    private HashMap<String, Float> parse(String data) {
-        HashMap<String, Float> map = new HashMap<>();
-        String [] params = data.split("&");
+    public static HashMap<String, String> parse(String rowData) throws ArrayIndexOutOfBoundsException {
+        HashMap<String, String> data = new HashMap<>();
+        String [] params = rowData.split("&");
         for (String param : params) {
-            map.put(param.split("=")[0], Float.parseFloat(param.split("=")[1]));
+            String[] pair = param.split("=");
+            if (pair.length == 2) {
+                data.put(pair[0], pair[1]);
+            } else {
+                data.put(pair[0], "");
+            }
         }
-        return map;
+        return data;
     }
 }
