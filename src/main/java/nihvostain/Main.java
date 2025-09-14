@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 
 public class Main {
     public static void main(String[] args) {
@@ -20,6 +21,7 @@ public class Main {
         FCGIInterface fcgi = new FCGIInterface();
 
         while (fcgi.FCGIaccept() >= 0) {
+            long startTime = System.nanoTime();
             try {
                 String method = System.getProperty("REQUEST_METHOD");
 
@@ -33,14 +35,22 @@ public class Main {
                         read += r;
                     }
 
-                    String data = new String(buffer, StandardCharsets.UTF_8);
-                    HashMap<String, String> map = parse(data);
-
-                    System.out.print("Status: 200 OK\r\n");
-                    System.out.print("Content-Type: text/html; charset=UTF-8\r\n\r\n");
-                    System.out.print("<html><body><h2>Полученные данные:</h2><pre>" + data + "</pre></body></html>");
-                    System.out.flush();
-
+                    String rowData = new String(buffer, StandardCharsets.UTF_8);
+                    Checker checker = new Checker(parse(rowData));
+                    if (checker.isValid()) {
+                        long elapsedNanos = System. nanoTime() - startTime;
+                        System.out.print(createResponse("200 OK", "application/json",
+                                """
+                                {
+                                "answer": %b,
+                                "workTimeMicros": %d
+                                }
+                                """.formatted(checker.inZone(), elapsedNanos/1000)));
+                        System.out.flush();
+                    } else {
+                        System.out.print(createResponse("400 Bad Request", "application/json", ""));
+                        System.out.flush();
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -63,4 +73,13 @@ public class Main {
         }
         return data;
     }
+
+    public static String createResponse(String status, String contentType,String content) {
+        return """
+           Status: %s
+           Content-Type: %s
+           
+           %s""".formatted(status, contentType, content);
+    }
+
 }
