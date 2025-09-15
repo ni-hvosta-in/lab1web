@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лаба 1</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <style>
+        body, button     {
+            text-align: center;
+            padding: 10px;
+            border: 2px groove coral;
+            color: blue;
+            line-height: 1.4;
+        }
+
+        header {
+            font-family: serif;
+            color: darkred;
+            font-size: larger;
+        }
+
+        header a {
+            color: inherit;      
+            text-decoration: none; 
+        }
+
+        header > p {
+            margin: 3px;
+        }
+
+        .fio::before{
+            content: "ℹ️";
+        }
+
+        table {
+            border: 1px solid cadetblue;
+            width: 100%;
+        }
+        
+        th {
+            background-color: rgba(252, 225, 225, 0.8); 
+            font-weight: bold;
+            border: 1px solid #333;
+            padding: 12px;
+            text-align: center;
+        }
+
+        td {
+            background-color: rgba(255, 255, 255, 0.7); /* Полупрозрачный белый */
+            border: 1px solid #333;
+            padding: 12px;
+            text-align: center;
+        }
+
+        button:hover{
+            background-color: bisque;
+            transform: scale(110%);
+            font-style: italic;
+        }
+
+        input, select, button {
+            padding: 1%; 
+            margin: 1%;
+        }
+
+        button {
+            width: 40%;
+            height: 5%;
+        }
+
+        .error {
+            border: 2px solid red;
+            background-color: #ffe6e6;
+        }
+
+        input[type="radio"].error {
+            outline: 2px solid red;
+            box-shadow: 0 0 5px red;
+        }
+
+        input[type="radio"].error + label {
+            color: red;
+        }
+        
+    </style>
+</head>
+<body>  
+    <header>
+        <p>Лабораторная работа №1<p>
+        <p class="fio"> 
+            <a href="https://my.itmo.ru/persons/466207?p=1&q=%D0%BA%D0%BE%D0%B2%D1%8B%D1%80%D1%88%D0%B8%D0%BD">Ковыршин Александр Сергеевич </a>
+        </p>
+        <p>P3217</p>
+        <p>Вариант 466207</p>        
+    </header>
+    <table> 
+        <!-- Первая строка: объединяем ячейки для картинки и формы -->
+        <tr>
+            <td colspan="3"> <!-- Картинка занимает 3 колонки -->
+                <img src="graph.png" alt="мишень" style="max-width: 300px;"/> 
+            </td>
+            <td colspan="3"> <!-- Форма занимает 3 колонки -->
+                <form method="post" action="/" id="mainForm">
+                    <div>
+                        <label for = "inputX">Выберите X:</label>
+                        <select name="x" id = "inputX">
+                            <option value="-2">-2</option>
+                            <option value="-1.5">-1.5</option>
+                            <option value="-1">-1</option>
+                            <option value="-0.5">-0.5</option>
+                            <option value="0">0</option>
+                            <option value="0.5">0.5</option>
+                            <option value="1">1</option>
+                            <option value="1.5">1.5</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for = "inputY">Введите Y:</label>
+                        <input type="text" name="y" placeholder="{-5..5}" id="inputY">
+                    </div>
+                    Выберите R:
+                    <div>
+                        <input type="radio" name="r" value="1" id="r1">
+                        <label for="r1">1</label>
+                        
+                        <input type="radio" name="r" value="2" id="r2">
+                        <label for="r2">2</label>
+                        
+                        <input type="radio" name="r" value="3" id="r3">
+                        <label for="r3">3</label>
+                        
+                        <input type="radio" name="r" value="4" id="r4">
+                        <label for="r4">4</label>
+                        
+                        <input type="radio" name="r" value="5" id="r5">
+                        <label for="r5">5</label>
+                    </div>
+                    <div>
+                        <button type="submit" id = 'submitButton'>Проверить попадание</button>
+                    </div>
+                    <div>
+                        <button type="button" id = 'clearButton'>Очистить таблицы</button>
+                    </div>
+                </form>
+            </td>
+        </tr>
+        
+        <tr>    
+            <th>X</th>
+            <th>Y</th>
+            <th>R</th>
+            <th>Попал?</th>
+            <th>Текущее время</th>
+            <th>Время работы</th>
+        </tr>
+
+        <!-- Контейнер для результатов -->
+        <tbody id="resultsBody">
+            <!-- Сюда JavaScript будет добавлять строки с результатами -->
+        </tbody>
+</table>
+    <script> 
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "2000"
+        };
+        const xSelect = document.getElementById('inputX');
+        const yInput = document.getElementById('inputY');
+        const submitButton = document.getElementById('submitButton');
+        const radioButtons = document.querySelectorAll('input[name="r"]');
+        const form = document.getElementById('mainForm'); // Добавили получение формы
+        const clearButton = document.getElementById('clearButton');
+
+        function checkY() {
+            const value = yInput.value;
+            const isValid = /^-?\d+(\.\d+)?$/.test(value) && parseFloat(value) >= -5 && parseFloat(value) <= 5;
+
+            if (!isValid) {
+                yInput.classList.add('error');
+                return false;
+            } else {
+                yInput.classList.remove('error');
+                return true;
+            }
+        }
+
+        function checkR (){
+            let isChecked = false;
+        
+            for (let i = 0; i < radioButtons.length; i++) {
+                if (radioButtons[i].checked) {
+                    isChecked = true;
+                }
+            }
+            
+            if (!isChecked) {
+                for (let i = 0; i < radioButtons.length; i++) {
+                    radioButtons[i].classList.add('error');
+                }
+            } else {
+                for (let i = 0; i < radioButtons.length; i++) {
+                    radioButtons[i].classList.remove('error');
+                }
+            }
+            
+            return isChecked;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const savedX = localStorage.getItem('xValue');
+            const savedY = localStorage.getItem('yValue');
+            const savedR = localStorage.getItem('rValue');
+            const savedResults = localStorage.getItem('results');
+            
+            if (savedX) {
+                xSelect.value = savedX;
+            }
+            if (savedY) {
+                yInput.value = savedY;
+                checkY(); 
+            }
+            if (savedR) {
+                const radioToCheck = document.querySelector(`input[name="r"][value="${savedR}"]`);
+                if (radioToCheck) {
+                    radioToCheck.checked = true;
+                }
+            }
+            if (savedResults) {
+                document.getElementById('resultsBody').innerHTML = savedResults;
+            }
+            console.log("загрузил сохраненное" );
+        });
+
+        xSelect.addEventListener('change', function() {
+            localStorage.setItem('xValue', xSelect.value); // Сохраняем значение X в localStorage
+        });
+
+        yInput.addEventListener('input', function() {
+            
+            this.value = this.value.replace(/[^0-9.-]/g, ''); // Разрешаем только цифры, точку и минус
+            this.value = this.value.replace(/\.\./g, '.'); // Не более одной точки
+            this.value = this.value.replace(/--/g, '-'); // Не более одного мин
+            if (this.value.indexOf('-') > 0) {
+                this.value = this.value.replace(/-/g, '');
+            }
+
+            checkY();
+            localStorage.setItem('yValue', yInput.value); // Сохраняем значение Y в localStorage
+    
+        });
+
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const selectedR = document.querySelector('input[name="r"]:checked');
+                if (selectedR) {
+                    localStorage.setItem('rValue', selectedR.value); // Сохраняем значение R в localStorage
+                }
+            });
+        });
+
+
+
+        // Обработчик отправки формы
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартную отправку
+            const formData = new FormData(form); // СОЗДАЕМ FormData
+            console.log("Форма отправляется");
+            if (checkY() && checkR()){
+                // Отправляем AJAX запрос
+                $.ajax({
+                    url: '/fcgi/labwork1',
+                    type: 'POST',
+                    data: $(this).serialize(), // Автоматически сериализуем данные формы
+                    success: function(response) {
+                        
+                        toastr.success('Данные успешно отправлены!');
+
+                        console.log("Успешный ответ:", response);
+                        
+                        let data = response;
+                        const x = formData.get('x');
+                        const y = formData.get('y');
+                        const r = formData.get('r');
+                        const answer = data.answer;
+                        const workTime = data.workTimeMicros;
+                        const now = data.currentTime;
+                        const resultsBody = document.getElementById('resultsBody');
+
+                        let newRow;
+                        if (answer){
+                            newRow = `
+                                <tr>
+                                    <td>${x}</td>
+                                    <td>${y}</td>
+                                    <td>${r}</td>
+                                    <td>Попал✅</td>
+                                    <td>${now}</td>
+                                    <td>${workTime} μs</td>
+                                </tr>
+                            `;
+                        } else {
+                            newRow = `
+                                <tr>
+                                    <td>${x}</td>
+                                    <td>${y}</td>
+                                    <td>${r}</td>
+                                    <td>Промазал❌</td>
+                                    <td>${now}</td>
+                                    <td>${workTime} μs</td>
+                                </tr>
+                            `;
+                        }
+                        
+                        resultsBody.innerHTML += newRow;
+                        localStorage.setItem('results', resultsBody.innerHTML); // Сохраняем в localStorage
+                        console.log("сохранил таблицу");
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("Ошибка:", error);
+                        toastr.error('Ошибка при отправке данных.');
+                    }
+                });
+            } else {
+                console.log("BAD - валидация не пройдена");
+                toastr.warning('Пожалуйста, исправьте ошибки в форме.');
+            }
+        });
+
+        clearButton.addEventListener('click', function () {
+            const resultsBody = document.getElementById("resultsBody");
+            if (confirm("Вы уверены, что хотите очистить таблицу?")){
+                resultsBody.innerHTML = '';
+                localStorage.removeItem('results'); // Удаляем из localStorage
+                console.log("очистил");
+            }
+        });
+    </script>
+</body>
+</html>
+
