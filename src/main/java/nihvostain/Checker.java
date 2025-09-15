@@ -16,7 +16,7 @@ public class Checker {
             x = Integer.parseInt(data.get("x"));
             y = Float.parseFloat(data.get("y"));
             r = Integer.parseInt(data.get("r"));
-            return true;
+            return (-2 <= x && x <= 2) && (-5 <= y && y <= 5) && (1 <= r && r <= 5);
         } catch (NumberFormatException e) {
             return false;
         }

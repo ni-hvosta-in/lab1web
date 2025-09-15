@@ -4,6 +4,8 @@ import com.fastcgi.FCGIInterface;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
@@ -43,9 +45,10 @@ public class Main {
                                 """
                                 {
                                 "answer": %b,
+                                "currentTime": "%s",
                                 "workTimeMicros": %d
                                 }
-                                """.formatted(checker.inZone(), elapsedNanos/1000)));
+                                """.formatted(checker.inZone(),ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), elapsedNanos/1000)));
                         System.out.flush();
                     } else {
                         System.out.print(createResponse("400 Bad Request", "application/json", ""));
