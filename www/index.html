@@ -6,10 +6,8 @@
     <title>Лаба 1</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
-    <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <style>
         body, button     {
@@ -18,8 +16,13 @@
             border: 2px groove coral;
             color: blue;
             line-height: 1.4;
+            font-size: 13px; 
         }
-
+        @media (max-width: 800px) {
+        body, button {
+            font-size: 10px; 
+        }
+}
         header {
             font-family: serif;
             color: darkred;
@@ -42,6 +45,8 @@
         table {
             border: 1px solid cadetblue;
             width: 100%;
+            min-width: 300px;
+            min-height: 100px;
         }
         
         th {
@@ -53,7 +58,7 @@
         }
 
         td {
-            background-color: rgba(255, 255, 255, 0.7); /* Полупрозрачный белый */
+            background-color: rgba(255, 255, 255, 0.7); 
             border: 1px solid #333;
             padding: 12px;
             text-align: center;
@@ -88,7 +93,20 @@
         input[type="radio"].error + label {
             color: red;
         }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
         
+        canvas
+        {
+            border: 1px solid black;
+            background-color: #f0f8ff;
+            width: 200px;
+            height: 200px;
+        }
     </style>
 </head>
 <body>  
@@ -100,13 +118,15 @@
         <p>P3217</p>
         <p>Вариант 466207</p>        
     </header>
+
+    <div class = "form-container"> 
     <table> 
-        <!-- Первая строка: объединяем ячейки для картинки и формы -->
+       
         <tr>
-            <td colspan="3"> <!-- Картинка занимает 3 колонки -->
-                <img src="graph.png" alt="мишень" style="max-width: 300px;"/> 
+            <td colspan="3"> 
+                <svg id="graph" width="200" height="200" style="border:1px solid black; background-color:#f0f8ff;"></svg>
             </td>
-            <td colspan="3"> <!-- Форма занимает 3 колонки -->
+            <td colspan="3"> 
                 <form method="post" action="/" id="mainForm">
                     <div>
                         <label for = "inputX">Выберите X:</label>
@@ -162,11 +182,10 @@
             <th>Время работы</th>
         </tr>
 
-        <!-- Контейнер для результатов -->
         <tbody id="resultsBody">
-            <!-- Сюда JavaScript будет добавлять строки с результатами -->
         </tbody>
 </table>
+</div>
     <script> 
         toastr.options = {
             "closeButton": true,
@@ -178,7 +197,7 @@
         const yInput = document.getElementById('inputY');
         const submitButton = document.getElementById('submitButton');
         const radioButtons = document.querySelectorAll('input[name="r"]');
-        const form = document.getElementById('mainForm'); // Добавили получение формы
+        const form = document.getElementById('mainForm'); 
         const clearButton = document.getElementById('clearButton');
 
         function checkY() {
@@ -240,23 +259,24 @@
                 document.getElementById('resultsBody').innerHTML = savedResults;
             }
             console.log("загрузил сохраненное" );
+            drawGraph(3);
         });
 
         xSelect.addEventListener('change', function() {
-            localStorage.setItem('xValue', xSelect.value); // Сохраняем значение X в localStorage
+            localStorage.setItem('xValue', xSelect.value); 
         });
 
         yInput.addEventListener('input', function() {
             
-            this.value = this.value.replace(/[^0-9.-]/g, ''); // Разрешаем только цифры, точку и минус
-            this.value = this.value.replace(/\.\./g, '.'); // Не более одной точки
-            this.value = this.value.replace(/--/g, '-'); // Не более одного мин
+            this.value = this.value.replace(/[^0-9.-]/g, ''); 
+            this.value = this.value.replace(/\.\./g, '.'); 
+            this.value = this.value.replace(/--/g, '-'); 
             if (this.value.indexOf('-') > 0) {
                 this.value = this.value.replace(/-/g, '');
             }
 
             checkY();
-            localStorage.setItem('yValue', yInput.value); // Сохраняем значение Y в localStorage
+            localStorage.setItem('yValue', yInput.value); 
     
         });
 
@@ -264,24 +284,22 @@
             radio.addEventListener('change', function() {
                 const selectedR = document.querySelector('input[name="r"]:checked');
                 if (selectedR) {
-                    localStorage.setItem('rValue', selectedR.value); // Сохраняем значение R в localStorage
+                    localStorage.setItem('rValue', selectedR.value); 
                 }
             });
         });
 
-
-
-        // Обработчик отправки формы
+    
         form.addEventListener('submit', function (event) {
-            event.preventDefault(); // Предотвращаем стандартную отправку
-            const formData = new FormData(form); // СОЗДАЕМ FormData
+            event.preventDefault(); 
+            const formData = new FormData(form); 
             console.log("Форма отправляется");
             if (checkY() && checkR()){
-                // Отправляем AJAX запрос
+                
                 $.ajax({
                     url: '/fcgi/labwork1',
                     type: 'POST',
-                    data: $(this).serialize(), // Автоматически сериализуем данные формы
+                    data: $(this).serialize(), 
                     success: function(response) {
                         
                         toastr.success('Данные успешно отправлены!');
@@ -296,7 +314,9 @@
                         const workTime = data.workTimeMicros;
                         const now = data.currentTime;
                         const resultsBody = document.getElementById('resultsBody');
+                        const svg = document.getElementById("graph");
 
+                        drawGraph(parseFloat(x), parseFloat(y), parseFloat(r));
                         let newRow;
                         if (answer){
                             newRow = `
@@ -322,8 +342,8 @@
                             `;
                         }
                         
-                        resultsBody.innerHTML += newRow;
-                        localStorage.setItem('results', resultsBody.innerHTML); // Сохраняем в localStorage
+                        resultsBody.innerHTML = newRow + resultsBody.innerHTML;
+                        localStorage.setItem('results', resultsBody.innerHTML); 
                         console.log("сохранил таблицу");
                     },
                     error: function(xhr, status, error) {
@@ -341,10 +361,78 @@
             const resultsBody = document.getElementById("resultsBody");
             if (confirm("Вы уверены, что хотите очистить таблицу?")){
                 resultsBody.innerHTML = '';
-                localStorage.removeItem('results'); // Удаляем из localStorage
+                localStorage.removeItem('results'); 
                 console.log("очистил");
             }
         });
+
+        function drawGraph(pointX, pointY, R) {
+            const svg = document.getElementById("graph");
+            svg.innerHTML = '';  // очистка SVG
+
+            const centerX = 100, centerY = 100, scale = 40; // расстояние между метками = 40px
+
+            function createLine(x1,y1,x2,y2,stroke="black") {
+                const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+                line.setAttribute("x1",x1); line.setAttribute("y1",y1);
+                line.setAttribute("x2",x2); line.setAttribute("y2",y2);
+                line.setAttribute("stroke",stroke);
+                svg.appendChild(line);
+            }
+
+            function createText(x,y,text) {
+                const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+                t.setAttribute("x",x); t.setAttribute("y",y);
+                t.setAttribute("font-size","10px");
+                t.textContent = text;
+                svg.appendChild(t);
+            }
+
+            createLine(0, centerY, 200, centerY);  // X
+            createLine(centerX, 0, centerX, 200);  // Y
+
+            ["-R","-R/2","0","R/2","R"].forEach((label,i)=>{
+                const x = centerX + (i-2)*scale;
+                createLine(x, centerY-4, x, centerY+4);
+                createText(x-8, centerY+15, label);
+            });
+
+            ["R","R/2","0","-R/2","-R"].forEach((label,i)=>{
+                const y = centerY - (i-2)*scale;
+                createLine(centerX-4, y, centerX+4, y);
+                createText(centerX+8, y+4, label);
+            });
+
+            const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+            rect.setAttribute("x", centerX-40);
+            rect.setAttribute("y", centerY-80);
+            rect.setAttribute("width", 40);
+            rect.setAttribute("height", 80);
+            rect.setAttribute("fill","rgba(0,150,255,0.6)");
+            rect.setAttribute("stroke","blue");
+            svg.appendChild(rect);
+
+            const tri = document.createElementNS("http://www.w3.org/2000/svg","polygon");
+            tri.setAttribute("points", `${centerX},${centerY} ${centerX+80},${centerY} ${centerX},${centerY+40}`);
+            tri.setAttribute("fill","rgba(0,150,255,0.6)");
+            tri.setAttribute("stroke","blue");
+            svg.appendChild(tri);
+
+            const arc = document.createElementNS("http://www.w3.org/2000/svg","path");
+            arc.setAttribute("d", `M ${centerX-80},${centerY} A 80 80 0 0 0 ${centerX},${centerY+80} L ${centerX},${centerY} Z`);
+            arc.setAttribute("fill","rgba(0,150,255,0.6)");
+            arc.setAttribute("stroke","blue");
+            svg.appendChild(arc);
+
+            if(pointX !== undefined && pointY !== undefined && R !== undefined) {
+                const point = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                point.setAttribute("cx", 2* pointX * scale/R  + centerX);
+                point.setAttribute("cy", - 2* pointY * scale/R + centerY);
+                point.setAttribute("r", 3);
+                point.setAttribute("fill", "red");
+                svg.appendChild(point);
+            }
+    }
     </script>
 </body>
 </html>
